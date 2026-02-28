@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shop - HELPER STORE</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/responsive.css">
+</head>
+<body>
+    <!-- Navigation Bar -->
+    <nav class="navbar">
+        <div class="container">
+            <div class="nav-brand">
+                <a href="index.html" class="logo">HELPER STORE</a>
+            </div>
+            <ul class="nav-menu">
+                <li><a href="index.html" class="nav-link">Home</a></li>
+                <li><a href="shop.html" class="nav-link active">Shop</a></li>
+                <li><a href="#about" class="nav-link">About</a></li>
+                <li><a href="#contact" class="nav-link">Contact</a></li>
+            </ul>
+            <div class="nav-icons">
+                <a href="cart.html" class="nav-icon cart-icon">
+                    🛒 <span class="cart-count">0</span>
+                </a>
+                <div class="user-menu">
+                    <button class="nav-icon user-icon">👤</button>
+                    <div class="dropdown-menu">
+                        <a href="login.html">Login</a>
+                        <a href="register.html">Register</a>
+                        <a href="profile.html" id="profile-link" style="display:none;">Profile</a>
+                        <a href="#" id="logout-link" style="display:none;">Logout</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Shop Section -->
+    <section class="shop-section">
+        <div class="container">
+            <h1>Shop All Products</h1>
+            
+            <div class="shop-layout">
+                <!-- Sidebar Filters -->
+                <aside class="shop-sidebar">
+                    <div class="filter-group">
+                        <h3>Categories</h3>
+                        <div class="filter-options">
+                            <label><input type="checkbox" value="electronics"> Electronics</label>
+                            <label><input type="checkbox" value="fashion"> Fashion</label>
+                            <label><input type="checkbox" value="home"> Home & Garden</label>
+                            <label><input type="checkbox" value="sports"> Sports</label>
+                        </div>
+                    </div>
+
+                    <div class="filter-group">
+                        <h3>Price Range</h3>
+                        <input type="range" id="price-range" min="0" max="10000" value="10000">
+                        <p>Max: $<span id="price-display">10000</span></p>
+                    </div>
+
+                    <div class="filter-group">
+                        <h3>Sort By</h3>
+                        <select id="sort-select">
+                            <option value="">Featured</option>
+                            <option value="price-low">Price: Low to High</option>
+                            <option value="price-high">Price: High to Low</option>
+                            <option value="newest">Newest</option>
+                            <option value="rating">Highest Rated</option>
+                        </select>
+                    </div>
+
+                    <button class="btn btn-secondary" id="reset-filters">Reset Filters</button>
+                </aside>
+
+                <!-- Products Grid -->
+                <main class="shop-main">
+                    <div class="products-grid" id="products-grid">
+                        <!-- Products loaded dynamically -->
+                    </div>
+                </main>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h4>About HELPER STORE</h4>
+                    <p>Your trusted online shopping destination for quality products.</p>
+                </div>
+                <div class="footer-section">
+                    <h4>Quick Links</h4>
+                    <ul>
+                        <li><a href="#">About Us</a></li>
+                        <li><a href="#">Privacy Policy</a></li>
+                        <li><a href="#">Terms of Service</a></li>
+                        <li><a href="#">Contact Us</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h4>Customer Service</h4>
+                    <ul>
+                        <li><a href="#">Track Order</a></li>
+                        <li><a href="#">Returns</a></li>
+                        <li><a href="#">FAQ</a></li>
+                        <li><a href="#">Support</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h4>Connect With Us</h4>
+                    <div class="social-links">
+                        <a href="#">Facebook</a>
+                        <a href="#">Twitter</a>
+                        <a href="#">Instagram</a>
+                    </div>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2026 HELPER STORE. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="js/api.js"></script>
+    <script src="js/main.js"></script>
+    <script>
+        // Shop page specific functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            loadAllProducts();
+            setupFilters();
+        });
+
+        function setupFilters() {
+            const categoryCheckboxes = document.querySelectorAll('.filter-options input[type="checkbox"]');
+            const priceRange = document.getElementById('price-range');
+            const sortSelect = document.getElementById('sort-select');
+            const resetBtn = document.getElementById('reset-filters');
+
+            categoryCheckboxes.forEach(checkbox => {
+                checkbox.addEventListener('change', loadAllProducts);
+            });
+
+            priceRange.addEventListener('change', function() {
+                document.getElementById('price-display').textContent = this.value;
+                loadAllProducts();
+            });
+
+            sortSelect.addEventListener('change', loadAllProducts);
+
+            resetBtn.addEventListener('click', function() {
+                categoryCheckboxes.forEach(cb => cb.checked = false);
+                priceRange.value = 10000;
+                sortSelect.value = '';
+                document.getElementById('price-display').textContent = '10000';
+                loadAllProducts();
+            });
+        }
+
+        function loadAllProducts() {
+            const categories = Array.from(document.querySelectorAll('.filter-options input[type="checkbox"]:checked'))
+                .map(cb => cb.value);
+            const maxPrice = document.getElementById('price-range').value;
+            const sort = document.getElementById('sort-select').value;
+
+            apiCall('GET', '/api/products', {
+                categories: categories.join(','),
+                maxPrice: maxPrice,
+                sort: sort
+            }).then(products => {
+                displayProducts(products);
+            });
+        }
+
+        function displayProducts(products) {
+            const grid = document.getElementById('products-grid');
+            grid.innerHTML = '';
+
+            if (products.length === 0) {
+                grid.innerHTML = '<p>No products found. Try adjusting your filters.</p>';
+                return;
+            }
+
+            products.forEach(product => {
+                const productCard = createProductCard(product);
+                grid.appendChild(productCard);
+            });
+        }
+    </script>
+</body>
+</html>
